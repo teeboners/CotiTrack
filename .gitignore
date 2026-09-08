@@ -1,0 +1,9 @@
+Backend/.venv/
+Backend/__pycache__/
+Backend/**/*.pyc
+Backend/.env
+Frontend/node_modules/
+Frontend/build/
+Frontend/.env
+.runtime/
+.vscode/

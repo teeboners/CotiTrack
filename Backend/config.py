@@ -12,3 +12,4 @@ class Config:
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN")
+    COOKIE_SECURE = os.getenv("COOKIE_SECURE", "0") == "1"

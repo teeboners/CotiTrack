@@ -1,5 +1,7 @@
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -85,4 +87,259 @@ button:disabled {
   background: white;
   border: 1px solid #ced9e5;
   border-radius: 8px;
+}
+
+.menu-principal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 24px;
+  background: white;
+  border-bottom: 1px solid #ced9e5;
+}
+
+.menu-principal a {
+  padding: 8px 10px;
+  color: #245b88;
+  text-decoration: none;
+}
+
+.titulo-pagina,
+.busqueda,
+.acciones-formulario,
+.acciones-tabla {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titulo-pagina,
+.busqueda {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.titulo-pagina h1,
+.titulo-pagina p {
+  margin-top: 0;
+}
+
+.busqueda input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #9fb0c1;
+  border-radius: 6px;
+}
+
+.formulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.formulario h2,
+.formulario .mensaje-error,
+.formulario .mensaje-exito,
+.formulario .acciones-formulario {
+  grid-column: 1 / -1;
+}
+
+.campo {
+  display: grid;
+  gap: 6px;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #9fb0c1;
+  border-radius: 6px;
+}
+
+.campo textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.mensaje-exito {
+  padding: 10px;
+  border: 1px solid #75ad87;
+  border-radius: 6px;
+  background: #edfff2;
+  color: #236136;
+}
+
+.secundario {
+  background: #65788b;
+}
+
+.tabla-contenedor {
+  overflow-x: auto;
+  background: white;
+  border: 1px solid #ced9e5;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid #dce4ec;
+  text-align: left;
+}
+
+@media (max-width: 700px) {
+  .barra-superior,
+  .titulo-pagina,
+  .busqueda {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .formulario {
+    grid-template-columns: 1fr;
+  }
+}
+
+.boton-enlace {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #245b88;
+  color: white;
+  text-decoration: none;
+}
+
+.filtros,
+.formulario-grid,
+.item-cotizacion {
+  display: grid;
+  gap: 12px;
+}
+
+.filtros {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.formulario-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cotizacion-form {
+  display: grid;
+  gap: 16px;
+}
+
+.cotizacion-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.cotizacion-form input,
+.cotizacion-form select,
+.cotizacion-form textarea,
+.filtros input,
+.filtros select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #9fb0c1;
+  border-radius: 6px;
+}
+
+.item-cotizacion {
+  grid-template-columns: 1.2fr 1.5fr 100px 130px 140px auto;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.resumen-totales {
+  width: min(100%, 350px);
+  margin: 20px 0 20px auto;
+  padding: 16px;
+  background: #edf3f8;
+}
+
+.seguimiento {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.seguimiento textarea,
+.seguimiento select,
+td input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #9fb0c1;
+  border-radius: 6px;
+}
+
+.seguimiento li {
+  margin-bottom: 14px;
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.indicador {
+  display: grid;
+  gap: 10px;
+}
+
+.indicador span {
+  color: #65788b;
+}
+
+.indicador strong {
+  font-size: 25px;
+  color: #245b88;
+}
+
+.panel-estados {
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .filtros,
+  .formulario-grid,
+  .item-cotizacion {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .contenido {
+    padding: 18px 12px;
+  }
+
+  .menu-principal {
+    padding: 8px 12px;
+  }
+
+  .menu-principal a {
+    width: 100%;
+  }
+
+  .acciones-formulario,
+  .acciones-tabla {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  button,
+  .boton-enlace {
+    min-height: 44px;
+  }
 }

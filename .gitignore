@@ -1,6 +1,7 @@
 Backend/.venv/
 Backend/__pycache__/
 Backend/**/*.pyc
+Backend/.pytest_cache/
 Backend/.env
 Frontend/node_modules/
 Frontend/build/

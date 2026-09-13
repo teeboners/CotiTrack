@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Link, Redirect, Route, Switch } from "react-router-dom";
+import {
+  BrowserRouter,
+  NavLink,
+  Redirect,
+  Route,
+  Switch,
+} from "react-router-dom";
 
 import api from "./api";
 import Clientes from "./catalogos/Clientes";
@@ -16,6 +22,7 @@ import "./styles.css";
 function App() {
   const [usuario, setUsuario] = useState(null);
   const [comprobando, setComprobando] = useState(true);
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   useEffect(() => {
     api.get("/auth/sesion")
@@ -29,78 +36,120 @@ function App() {
       await api.post("/auth/logout");
     } finally {
       setUsuario(null);
+      setMenuAbierto(false);
     }
   }
 
   if (comprobando) {
-    return <main className="inicio">Comprobando sesión...</main>;
+    return <main className="pantalla-carga">Comprobando sesión...</main>;
   }
 
   if (!usuario) {
     return <Login onLogin={setUsuario} />;
   }
 
+  function cerrarMenu() {
+    setMenuAbierto(false);
+  }
+
   return (
     <BrowserRouter>
       <div className="aplicacion">
-        <header className="barra-superior">
-          <div>
-            <strong>CotiTrack</strong>
-            <span>{usuario.nombre} · {usuario.rol}</span>
+        <aside className={`barra-lateral ${menuAbierto ? "menu-abierto" : ""}`}>
+          <div className="marca">
+            <span className="marca-icono">CT</span>
+            <div>
+              <strong>CotiTrack</strong>
+              <small>Gestión de cotizaciones</small>
+            </div>
           </div>
 
-          <button type="button" onClick={cerrarSesion}>
+          <nav className="menu-principal" aria-label="Navegación principal">
+            <NavLink exact to="/" activeClassName="activo" onClick={cerrarMenu}>
+              <span>▦</span> Dashboard
+            </NavLink>
+            <NavLink to="/clientes" activeClassName="activo" onClick={cerrarMenu}>
+              <span>●</span> Clientes
+            </NavLink>
+            <NavLink to="/productos" activeClassName="activo" onClick={cerrarMenu}>
+              <span>◆</span> Productos y servicios
+            </NavLink>
+            <NavLink to="/cotizaciones" activeClassName="activo" onClick={cerrarMenu}>
+              <span>▤</span> Cotizaciones
+            </NavLink>
+            {usuario.rol === "Administrador" && (
+              <NavLink to="/usuarios" activeClassName="activo" onClick={cerrarMenu}>
+                <span>●</span> Gestión de usuarios
+              </NavLink>
+            )}
+          </nav>
+
+          <button className="cerrar-sesion-lateral" type="button" onClick={cerrarSesion}>
             Cerrar sesión
           </button>
-        </header>
+        </aside>
 
-        <nav className="menu-principal">
-          <Link to="/">Dashboard</Link>
-          <Link to="/clientes">Clientes</Link>
-          <Link to="/productos">Productos y servicios</Link>
-          <Link to="/cotizaciones">Cotizaciones</Link>
-          {usuario.rol === "Administrador" && (
-            <Link to="/usuarios">Gestión de usuarios</Link>
-          )}
-        </nav>
+        {menuAbierto && (
+          <button
+            className="fondo-menu"
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={cerrarMenu}
+          />
+        )}
 
-        <main className="contenido">
-          <Switch>
-            <Route exact path="/">
-              <Dashboard />
-            </Route>
+        <div className="area-principal">
+          <header className="barra-superior">
+            <button
+              className="boton-menu"
+              type="button"
+              aria-label="Abrir menú"
+              onClick={() => setMenuAbierto(!menuAbierto)}
+            >
+              ☰
+            </button>
 
-            <Route path="/clientes">
-              <Clientes />
-            </Route>
+            <div className="usuario-actual">
+              <span className="usuario-avatar">
+                {usuario.nombre.trim().charAt(0).toUpperCase()}
+              </span>
+              <div>
+                <strong>{usuario.nombre}</strong>
+                <small>{usuario.rol}</small>
+              </div>
+            </div>
+          </header>
 
-            <Route path="/productos">
-              <Productos />
-            </Route>
-
-            <Route path="/usuarios">
-              {usuario.rol === "Administrador" ? <Usuarios /> : <Redirect to="/" />}
-            </Route>
-
-            <Route exact path="/cotizaciones/nueva">
-              <CotizacionForm />
-            </Route>
-
-            <Route exact path="/cotizaciones/:id/editar">
-              <CotizacionForm />
-            </Route>
-
-            <Route exact path="/cotizaciones/:id">
-              <CotizacionDetalle />
-            </Route>
-
-            <Route exact path="/cotizaciones">
-              <Cotizaciones />
-            </Route>
-
-            <Redirect to="/" />
-          </Switch>
-        </main>
+          <main className="contenido">
+            <Switch>
+              <Route exact path="/">
+                <Dashboard />
+              </Route>
+              <Route path="/clientes">
+                <Clientes />
+              </Route>
+              <Route path="/productos">
+                <Productos />
+              </Route>
+              <Route path="/usuarios">
+                {usuario.rol === "Administrador" ? <Usuarios /> : <Redirect to="/" />}
+              </Route>
+              <Route exact path="/cotizaciones/nueva">
+                <CotizacionForm />
+              </Route>
+              <Route exact path="/cotizaciones/:id/editar">
+                <CotizacionForm />
+              </Route>
+              <Route exact path="/cotizaciones/:id">
+                <CotizacionDetalle />
+              </Route>
+              <Route exact path="/cotizaciones">
+                <Cotizaciones />
+              </Route>
+              <Redirect to="/" />
+            </Switch>
+          </main>
+        </div>
       </div>
     </BrowserRouter>
   );

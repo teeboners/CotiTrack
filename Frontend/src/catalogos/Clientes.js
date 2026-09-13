@@ -17,6 +17,7 @@ function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState({ ...CLIENTE_VACIO });
   const [clienteEditando, setClienteEditando] = useState(null);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
@@ -54,6 +55,7 @@ function Clientes() {
       direccion: cliente.direccion || "",
     });
     setClienteEditando(cliente.cliente_id);
+    setMostrarFormulario(true);
     setMensaje("");
     setError("");
   }
@@ -61,6 +63,7 @@ function Clientes() {
   function limpiarFormulario() {
     setFormulario({ ...CLIENTE_VACIO });
     setClienteEditando(null);
+    setMostrarFormulario(false);
   }
 
   async function guardarCliente(evento) {
@@ -120,6 +123,15 @@ function Clientes() {
           <h1>Clientes</h1>
           <p>Consulta, registra y actualiza los clientes.</p>
         </div>
+        <button type="button" onClick={() => {
+          setFormulario({ ...CLIENTE_VACIO });
+          setClienteEditando(null);
+          setMostrarFormulario(true);
+          setMensaje("");
+          setError("");
+        }}>
+          Nuevo cliente
+        </button>
       </div>
 
       <form className="busqueda" onSubmit={buscarClientes}>
@@ -131,7 +143,7 @@ function Clientes() {
         <button type="submit">Buscar</button>
       </form>
 
-      <form className="tarjeta formulario" onSubmit={guardarCliente}>
+      {mostrarFormulario && <form className="tarjeta formulario" onSubmit={guardarCliente}>
         <h2>{clienteEditando ? "Editar cliente" : "Nuevo cliente"}</h2>
 
         <Campo etiqueta="Nombre o razón social">
@@ -171,15 +183,13 @@ function Clientes() {
           <button type="submit">
             {clienteEditando ? "Guardar cambios" : "Registrar cliente"}
           </button>
-          {clienteEditando && (
-            <button type="button" className="secundario" onClick={limpiarFormulario}>
-              Cancelar
-            </button>
-          )}
+          <button type="button" className="secundario" onClick={limpiarFormulario}>
+            Cancelar
+          </button>
         </div>
-      </form>
+      </form>}
 
-      <div className="tabla-contenedor">
+      <div className="tabla-contenedor tabla-catalogo">
         <table>
           <thead>
             <tr>
@@ -193,15 +203,15 @@ function Clientes() {
           <tbody>
             {clientes.map((cliente) => (
               <tr key={cliente.cliente_id}>
-                <td>{cliente.nombre_razon_social}</td>
-                <td>{cliente.rut || "—"}</td>
-                <td>{cliente.correo || "—"}</td>
-                <td>{cliente.activo ? "Activo" : "Inactivo"}</td>
-                <td className="acciones-tabla">
-                  <button type="button" onClick={() => comenzarEdicion(cliente)}>
+                <td data-label="Nombre"><strong>{cliente.nombre_razon_social}</strong></td>
+                <td data-label="RUT">{cliente.rut || "—"}</td>
+                <td data-label="Correo">{cliente.correo || "—"}</td>
+                <td data-label="Estado"><span className={`etiqueta-activo ${cliente.activo ? "activo" : "inactivo"}`}>{cliente.activo ? "Activo" : "Inactivo"}</span></td>
+                <td data-label="Acciones" className="acciones-tabla">
+                  <button type="button" className="boton-tabla" onClick={() => comenzarEdicion(cliente)}>
                     Editar
                   </button>
-                  <button type="button" className="secundario" onClick={() => cambiarEstado(cliente)}>
+                  <button type="button" className="boton-tabla peligro" onClick={() => cambiarEstado(cliente)}>
                     {cliente.activo ? "Desactivar" : "Activar"}
                   </button>
                 </td>

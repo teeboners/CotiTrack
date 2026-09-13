@@ -16,6 +16,7 @@ function Productos() {
   const [productos, setProductos] = useState([]);
   const [formulario, setFormulario] = useState({ ...PRODUCTO_VACIO });
   const [productoEditando, setProductoEditando] = useState(null);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
@@ -52,6 +53,7 @@ function Productos() {
       precio_referencia: producto.precio_referencia || 0,
     });
     setProductoEditando(producto.producto_id);
+    setMostrarFormulario(true);
     setMensaje("");
     setError("");
   }
@@ -59,6 +61,7 @@ function Productos() {
   function limpiarFormulario() {
     setFormulario({ ...PRODUCTO_VACIO });
     setProductoEditando(null);
+    setMostrarFormulario(false);
   }
 
   async function guardarProducto(evento) {
@@ -118,6 +121,15 @@ function Productos() {
           <h1>Productos y servicios</h1>
           <p>Consulta, registra y actualiza el catálogo comercial.</p>
         </div>
+        <button type="button" onClick={() => {
+          setFormulario({ ...PRODUCTO_VACIO });
+          setProductoEditando(null);
+          setMostrarFormulario(true);
+          setMensaje("");
+          setError("");
+        }}>
+          Nuevo producto o servicio
+        </button>
       </div>
 
       <form className="busqueda" onSubmit={buscarProductos}>
@@ -129,7 +141,7 @@ function Productos() {
         <button type="submit">Buscar</button>
       </form>
 
-      <form className="tarjeta formulario" onSubmit={guardarProducto}>
+      {mostrarFormulario && <form className="tarjeta formulario" onSubmit={guardarProducto}>
         <h2>{productoEditando ? "Editar producto o servicio" : "Nuevo producto o servicio"}</h2>
 
         <Campo etiqueta="Tipo">
@@ -170,15 +182,13 @@ function Productos() {
           <button type="submit">
             {productoEditando ? "Guardar cambios" : "Registrar"}
           </button>
-          {productoEditando && (
-            <button type="button" className="secundario" onClick={limpiarFormulario}>
-              Cancelar
-            </button>
-          )}
+          <button type="button" className="secundario" onClick={limpiarFormulario}>
+            Cancelar
+          </button>
         </div>
-      </form>
+      </form>}
 
-      <div className="tabla-contenedor">
+      <div className="tabla-contenedor tabla-catalogo">
         <table>
           <thead>
             <tr>
@@ -192,15 +202,15 @@ function Productos() {
           <tbody>
             {productos.map((producto) => (
               <tr key={producto.producto_id}>
-                <td>{producto.nombre}</td>
-                <td>{producto.tipo}</td>
-                <td>{producto.precio_referencia}</td>
-                <td>{producto.activo ? "Activo" : "Inactivo"}</td>
-                <td className="acciones-tabla">
-                  <button type="button" onClick={() => comenzarEdicion(producto)}>
+                <td data-label="Nombre"><strong>{producto.nombre}</strong></td>
+                <td data-label="Tipo">{producto.tipo === "PRODUCTO" ? "Producto" : "Servicio"}</td>
+                <td data-label="Precio">{Number(producto.precio_referencia).toLocaleString("es-CL")}</td>
+                <td data-label="Estado"><span className={`etiqueta-activo ${producto.activo ? "activo" : "inactivo"}`}>{producto.activo ? "Activo" : "Inactivo"}</span></td>
+                <td data-label="Acciones" className="acciones-tabla">
+                  <button type="button" className="boton-tabla" onClick={() => comenzarEdicion(producto)}>
                     Editar
                   </button>
-                  <button type="button" className="secundario" onClick={() => cambiarEstado(producto)}>
+                  <button type="button" className="boton-tabla peligro" onClick={() => cambiarEstado(producto)}>
                     {producto.activo ? "Desactivar" : "Activar"}
                   </button>
                 </td>

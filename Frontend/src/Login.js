@@ -31,34 +31,45 @@ function Login({ onLogin }) {
 
   return (
     <main className="login-page">
-      <form className="login-card" onSubmit={enviarFormulario}>
-        <h1>CotiTrack</h1>
-        <p>Gestión de cotizaciones comerciales</p>
+      <div className="login-contenido">
+        <div className="login-marca">
+          <span className="login-icono">CT</span>
+          <h1>CotiTrack</h1>
+          <p>Sistema de gestión de cotizaciones</p>
+        </div>
 
-        <label htmlFor="correo">Correo</label>
-        <input
-          id="correo"
-          type="email"
-          value={correo}
-          onChange={(evento) => setCorreo(evento.target.value)}
-          required
-        />
+        <form className="login-card" onSubmit={enviarFormulario}>
+          <h2>Iniciar sesión</h2>
 
-        <label htmlFor="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(evento) => setPassword(evento.target.value)}
-          required
-        />
+          <label htmlFor="correo">Correo electrónico</label>
+          <input
+            id="correo"
+            type="email"
+            value={correo}
+            onChange={(evento) => setCorreo(evento.target.value)}
+            placeholder="usuario@empresa.cl"
+            autoComplete="username"
+            required
+          />
 
-        {mensaje && <div className="mensaje-error">{mensaje}</div>}
+          <label htmlFor="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(evento) => setPassword(evento.target.value)}
+            placeholder="Ingrese su contraseña"
+            autoComplete="current-password"
+            required
+          />
 
-        <button type="submit" disabled={cargando}>
-          {cargando ? "Ingresando..." : "Ingresar"}
-        </button>
-      </form>
+          {mensaje && <div className="mensaje-error">{mensaje}</div>}
+
+          <button type="submit" disabled={cargando}>
+            {cargando ? "Ingresando..." : "Ingresar"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

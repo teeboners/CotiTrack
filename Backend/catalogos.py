@@ -149,6 +149,12 @@ def listar_roles():
             "datos": cursor.fetchall()
         })
 
+    except Error:
+        return jsonify({
+            "ok": False,
+            "mensaje": "No fue posible consultar los roles"
+        }), 500
+
     finally:
         close_connection(connection, cursor)
 

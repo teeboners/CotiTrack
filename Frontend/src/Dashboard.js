@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import api from "./api";
 
@@ -23,6 +24,12 @@ function Dashboard() {
     return <p>Cargando indicadores...</p>;
   }
 
+  const montosPorMoneda = {};
+  resumen.por_estado.forEach((item) => {
+    montosPorMoneda[item.moneda] =
+      (montosPorMoneda[item.moneda] || 0) + Number(item.monto);
+  });
+
   return (
     <section>
       <div className="titulo-pagina">
@@ -30,23 +37,50 @@ function Dashboard() {
           <h1>Dashboard</h1>
           <p>Resumen del seguimiento de cotizaciones.</p>
         </div>
+        <Link className="boton-enlace" to="/cotizaciones/nueva">
+          Nueva cotización
+        </Link>
       </div>
 
-      <div className="indicadores">
-        <article className="tarjeta indicador">
+      <section className="resumen-principal">
+        <div>
+          <span>Monto total cotizado</span>
+          {Object.entries(montosPorMoneda).length === 0 ? (
+            <strong>Sin cotizaciones</strong>
+          ) : (
+            Object.entries(montosPorMoneda).map(([moneda, monto]) => (
+              <strong key={moneda}>{moneda} {monto.toLocaleString("es-CL")}</strong>
+            ))
+          )}
+        </div>
+        <div>
           <span>Total de cotizaciones</span>
           <strong>{resumen.total_cotizaciones}</strong>
-        </article>
+        </div>
+      </section>
 
-        <article className="tarjeta indicador">
+      <div className="indicadores">
+        {resumen.por_estado.map((item) => (
+          <article className="tarjeta indicador" key={`${item.estado}-${item.moneda}`}>
+            <span className="etiqueta-estado" data-estado={item.estado}>
+              {item.estado}
+            </span>
+            <strong>{item.cantidad}</strong>
+            <small>{item.moneda} {Number(item.monto).toLocaleString("es-CL")}</small>
+          </article>
+        ))}
+
+        <article className="tarjeta indicador indicador-descartados">
           <span>Ítems descartados</span>
           <strong>{resumen.items_descartados}</strong>
+          <small>Resultado registrado con cantidad cero</small>
         </article>
 
         {resumen.aceptado_por_moneda.map((item) => (
-          <article className="tarjeta indicador" key={item.moneda}>
+          <article className="tarjeta indicador indicador-aceptado" key={item.moneda}>
             <span>Neto aceptado en {item.moneda}</span>
             <strong>{item.moneda} {Number(item.neto_aceptado).toLocaleString("es-CL")}</strong>
+            <small>Monto aceptado por los clientes</small>
           </article>
         ))}
       </div>

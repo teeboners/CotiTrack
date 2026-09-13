@@ -5,7 +5,7 @@ import Campo from "./Campo";
 
 
 const USUARIO_VACIO = {
-  rol_id: "2",
+  rol_id: "",
   nombre: "",
   correo: "",
   password: "",
@@ -14,17 +14,22 @@ const USUARIO_VACIO = {
 
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [formulario, setFormulario] = useState({ ...USUARIO_VACIO });
   const [usuarioEditando, setUsuarioEditando] = useState(null);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api.get("/usuarios")
-      .then((respuesta) => setUsuarios(respuesta.data.datos))
+    Promise.all([api.get("/usuarios"), api.get("/roles")])
+      .then(([respuestaUsuarios, respuestaRoles]) => {
+        setUsuarios(respuestaUsuarios.data.datos);
+        setRoles(respuestaRoles.data.datos);
+      })
       .catch((problema) => {
-        setError(problema.response?.data?.mensaje || "No fue posible cargar los usuarios");
+        setError(problema.response?.data?.mensaje || "No fue posible cargar usuarios o roles");
       });
   }, []);
 
@@ -52,6 +57,7 @@ function Usuarios() {
       password: "",
     });
     setUsuarioEditando(usuario.usuario_id);
+    setMostrarFormulario(true);
     setMensaje("");
     setError("");
   }
@@ -59,6 +65,7 @@ function Usuarios() {
   function limpiarFormulario() {
     setFormulario({ ...USUARIO_VACIO });
     setUsuarioEditando(null);
+    setMostrarFormulario(false);
   }
 
   async function guardarUsuario(evento) {
@@ -128,6 +135,15 @@ function Usuarios() {
           <h1>Gestión de usuarios</h1>
           <p>Consulta, registra y actualiza las cuentas del sistema.</p>
         </div>
+        <button type="button" onClick={() => {
+          setFormulario({ ...USUARIO_VACIO });
+          setUsuarioEditando(null);
+          setMostrarFormulario(true);
+          setMensaje("");
+          setError("");
+        }}>
+          Nuevo usuario
+        </button>
       </div>
 
       <form className="busqueda" onSubmit={buscarUsuarios}>
@@ -139,13 +155,15 @@ function Usuarios() {
         <button type="submit">Buscar</button>
       </form>
 
-      <form className="tarjeta formulario" onSubmit={guardarUsuario}>
+      {mostrarFormulario && <form className="tarjeta formulario" onSubmit={guardarUsuario}>
         <h2>{usuarioEditando ? "Editar usuario" : "Nuevo usuario"}</h2>
 
         <Campo etiqueta="Rol">
-          <select name="rol_id" value={formulario.rol_id} onChange={actualizarCampo}>
-            <option value="1">Administrador</option>
-            <option value="2">Usuario de ventas</option>
+          <select name="rol_id" value={formulario.rol_id} onChange={actualizarCampo} required>
+            <option value="">Seleccionar rol</option>
+            {roles.map((rol) => (
+              <option key={rol.rol_id} value={rol.rol_id}>{rol.nombre}</option>
+            ))}
           </select>
         </Campo>
 
@@ -183,15 +201,13 @@ function Usuarios() {
           <button type="submit">
             {usuarioEditando ? "Guardar cambios" : "Registrar usuario"}
           </button>
-          {usuarioEditando && (
-            <button type="button" className="secundario" onClick={limpiarFormulario}>
-              Cancelar
-            </button>
-          )}
+          <button type="button" className="secundario" onClick={limpiarFormulario}>
+            Cancelar
+          </button>
         </div>
-      </form>
+      </form>}
 
-      <div className="tabla-contenedor">
+      <div className="tabla-contenedor tabla-catalogo">
         <table>
           <thead>
             <tr>
@@ -205,15 +221,15 @@ function Usuarios() {
           <tbody>
             {usuarios.map((usuario) => (
               <tr key={usuario.usuario_id}>
-                <td>{usuario.nombre}</td>
-                <td>{usuario.correo}</td>
-                <td>{usuario.rol}</td>
-                <td>{usuario.activo ? "Activo" : "Inactivo"}</td>
-                <td className="acciones-tabla">
-                  <button type="button" onClick={() => comenzarEdicion(usuario)}>
+                <td data-label="Nombre"><strong>{usuario.nombre}</strong></td>
+                <td data-label="Correo">{usuario.correo}</td>
+                <td data-label="Rol">{usuario.rol}</td>
+                <td data-label="Estado"><span className={`etiqueta-activo ${usuario.activo ? "activo" : "inactivo"}`}>{usuario.activo ? "Activo" : "Inactivo"}</span></td>
+                <td data-label="Acciones" className="acciones-tabla">
+                  <button type="button" className="boton-tabla" onClick={() => comenzarEdicion(usuario)}>
                     Editar
                   </button>
-                  <button type="button" className="secundario" onClick={() => cambiarEstado(usuario)}>
+                  <button type="button" className="boton-tabla peligro" onClick={() => cambiarEstado(usuario)}>
                     {usuario.activo ? "Desactivar" : "Activar"}
                   </button>
                 </td>

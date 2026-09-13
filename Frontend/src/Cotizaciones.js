@@ -55,9 +55,9 @@ function Cotizaciones() {
         </Link>
       </div>
 
-      <form className="filtros" onSubmit={filtrar}>
-        <input name="folio" value={filtros.folio} onChange={cambiarFiltro} placeholder="Folio" />
-        <input name="cliente" value={filtros.cliente} onChange={cambiarFiltro} placeholder="Cliente" />
+      <form className="filtros tarjeta" onSubmit={filtrar}>
+        <input name="folio" value={filtros.folio} onChange={cambiarFiltro} placeholder="Buscar por folio" />
+        <input name="cliente" value={filtros.cliente} onChange={cambiarFiltro} placeholder="Buscar por cliente" />
         <select name="estado" value={filtros.estado} onChange={cambiarFiltro}>
           <option value="">Todos los estados</option>
           <option>Borrador</option>
@@ -75,7 +75,7 @@ function Cotizaciones() {
 
       {error && <div className="mensaje-error">{error}</div>}
 
-      <div className="tabla-contenedor">
+      <div className="tabla-contenedor tabla-cotizaciones">
         <table>
           <thead>
             <tr>
@@ -90,14 +90,18 @@ function Cotizaciones() {
           <tbody>
             {cotizaciones.map((cotizacion) => (
               <tr key={cotizacion.cotizacion_id}>
-                <td>{cotizacion.folio}</td>
-                <td>{cotizacion.cliente}</td>
-                <td>{cotizacion.fecha_emision}</td>
-                <td>{cotizacion.estado}</td>
-                <td>
+                <td data-label="Folio"><strong>{cotizacion.folio}</strong></td>
+                <td data-label="Cliente">{cotizacion.cliente}</td>
+                <td data-label="Fecha">{cotizacion.fecha_emision}</td>
+                <td data-label="Estado">
+                  <span className="etiqueta-estado" data-estado={cotizacion.estado}>
+                    {cotizacion.estado}
+                  </span>
+                </td>
+                <td data-label="Total">
                   {cotizacion.moneda} {Number(cotizacion.total).toLocaleString("es-CL")}
                 </td>
-                <td className="acciones-tabla">
+                <td data-label="Acciones" className="acciones-tabla">
                   <Link to={`/cotizaciones/${cotizacion.cotizacion_id}`}>Ver detalle</Link>
                   {cotizacion.estado === "Borrador" && (
                     <Link to={`/cotizaciones/${cotizacion.cotizacion_id}/editar`}>Editar</Link>

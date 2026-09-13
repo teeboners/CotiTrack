@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS configuracion_empresa (
 
 -- Roles iniciales
 
-INSERT INTO roles (nombre, descripcion)
+INSERT IGNORE INTO roles (nombre, descripcion)
 VALUES
 ('Administrador', 'Administra las cuentas de usuario'),
 ('Usuario de ventas', 'Gestiona clientes y cotizaciones');
@@ -157,7 +157,7 @@ VALUES
 
 -- Estados iniciales de las cotizaciones
 
-INSERT INTO estados_cotizacion (nombre, descripcion)
+INSERT IGNORE INTO estados_cotizacion (nombre, descripcion)
 VALUES
 ('Borrador', 'Cotización en elaboración'),
 ('Enviada', 'Cotización generada y enviada'),

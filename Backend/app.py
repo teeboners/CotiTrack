@@ -1,4 +1,6 @@
-from flask import Flask, jsonify
+from pathlib import Path
+
+from flask import Flask, jsonify, send_from_directory
 from mysql.connector import Error
 from auth import auth_bp
 from catalogos import catalogos_bp
@@ -8,8 +10,12 @@ from dashboard import dashboard_bp
 from config import Config
 from database import get_connection, close_connection
 
+
+FRONTEND_BUILD = Path(__file__).resolve().parent.parent / "Frontend" / "build"
+
+
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=None)
     app.config.from_object(Config)
     app.config.update(
         SESSION_COOKIE_HTTPONLY=True,
@@ -39,7 +45,17 @@ def create_app():
             return jsonify({"ok": False, "mensaje": "No fue posible consultar MySQL"}), 500
         finally:
             close_connection(connection, cursor)
-    
+
+    @app.get("/")
+    def frontend():
+        return send_from_directory(FRONTEND_BUILD, "index.html")
+
+    @app.get("/<path:ruta>")
+    def archivos_frontend(ruta):
+        archivo = FRONTEND_BUILD / ruta
+        if archivo.is_file():
+            return send_from_directory(FRONTEND_BUILD, ruta)
+        return send_from_directory(FRONTEND_BUILD, "index.html")
 
     return app
 

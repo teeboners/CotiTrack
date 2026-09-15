@@ -196,6 +196,7 @@ function Clientes() {
               <th>Nombre o razón social</th>
               <th>RUT</th>
               <th>Correo</th>
+              <th>Teléfono</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -206,6 +207,7 @@ function Clientes() {
                 <td data-label="Nombre"><strong>{cliente.nombre_razon_social}</strong></td>
                 <td data-label="RUT">{cliente.rut || "—"}</td>
                 <td data-label="Correo">{cliente.correo || "—"}</td>
+                <td data-label="Teléfono">{cliente.telefono || "—"}</td>
                 <td data-label="Estado"><span className={`etiqueta-activo ${cliente.activo ? "activo" : "inactivo"}`}>{cliente.activo ? "Activo" : "Inactivo"}</span></td>
                 <td data-label="Acciones" className="acciones-tabla">
                   <button type="button" className="boton-tabla" onClick={() => comenzarEdicion(cliente)}>
@@ -219,7 +221,7 @@ function Clientes() {
             ))}
             {clientes.length === 0 && (
               <tr>
-                <td colSpan="5">No se encontraron clientes.</td>
+                <td colSpan="6">No se encontraron clientes.</td>
               </tr>
             )}
           </tbody>

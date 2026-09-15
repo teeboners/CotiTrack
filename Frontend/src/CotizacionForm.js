@@ -61,7 +61,7 @@ function CotizacionForm() {
             items: datos.items.map((item) => ({
               producto_id: item.producto_id,
               descripcion_aplicada: item.descripcion_aplicada,
-              cantidad: item.cantidad,
+              cantidad: Math.max(1, parseInt(item.cantidad, 10) || 1),
               precio_unitario: item.precio_unitario,
             })),
           });
@@ -240,10 +240,14 @@ function CotizacionForm() {
                 <input
                   aria-label={`Cantidad del ítem ${indice + 1}`}
                   type="number"
-                  min="0.001"
-                  step="0.001"
+                  min="1"
+                  step="1"
                   value={item.cantidad}
-                  onChange={(evento) => cambiarItem(indice, "cantidad", evento.target.value)}
+                  onChange={(evento) => cambiarItem(
+                    indice,
+                    "cantidad",
+                    Math.max(1, parseInt(evento.target.value, 10) || 1),
+                  )}
                   required
                 />
                 <input
@@ -275,12 +279,22 @@ function CotizacionForm() {
             <h2>Condiciones y observaciones</h2>
             <div className="formulario-grid">
               <label>
-                Condiciones comerciales
-                <textarea name="condiciones_comerciales" value={formulario.condiciones_comerciales} onChange={cambiarGeneral} />
+                Condiciones comerciales (opcional)
+                <textarea
+                  name="condiciones_comerciales"
+                  value={formulario.condiciones_comerciales}
+                  onChange={cambiarGeneral}
+                  placeholder="Ejemplo: oferta válida por 15 días"
+                />
               </label>
               <label>
-                Observaciones
-                <textarea name="observaciones" value={formulario.observaciones} onChange={cambiarGeneral} />
+                Observaciones (opcional)
+                <textarea
+                  name="observaciones"
+                  value={formulario.observaciones}
+                  onChange={cambiarGeneral}
+                  placeholder="Ejemplo: información adicional para el cliente"
+                />
               </label>
             </div>
           </section>

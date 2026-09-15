@@ -15,6 +15,8 @@ function CotizacionDetalle() {
   const [estado, setEstado] = useState("Pendiente");
   const [observacionEstado, setObservacionEstado] = useState("");
   const [observacionResultado, setObservacionResultado] = useState("");
+  const [vistaPdf, setVistaPdf] = useState("");
+  const [archivoPdf, setArchivoPdf] = useState(null);
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -30,7 +32,10 @@ function CotizacionDetalle() {
 
     const nuevasCantidades = {};
     datos.items.forEach((item) => {
-      nuevasCantidades[item.detalle_id] = item.cantidad_aceptada ?? item.cantidad;
+      const cantidad = item.cantidad_aceptada === null
+        ? Math.max(1, parseInt(item.cantidad, 10) || 1)
+        : Math.max(0, parseInt(item.cantidad_aceptada, 10) || 0);
+      nuevasCantidades[item.detalle_id] = cantidad;
     });
     setCantidades(nuevasCantidades);
   }
@@ -43,7 +48,60 @@ function CotizacionDetalle() {
       });
   }, [id]);
 
-  async function generarPdf() {
+  useEffect(() => {
+    return () => {
+      if (vistaPdf) {
+        URL.revokeObjectURL(vistaPdf);
+      }
+    };
+  }, [vistaPdf]);
+
+  async function abrirVistaPrevia() {
+    setError("");
+    setMensaje("");
+
+    if (!cotizacion.empresa) {
+      setError("Falta configurar la empresa antes de generar el PDF");
+      return;
+    }
+
+    setProcesando(true);
+    try {
+      const archivo = await prepararPdf(cotizacion);
+      setArchivoPdf(archivo);
+      setVistaPdf(URL.createObjectURL(archivo));
+    } catch (problema) {
+      setError("No fue posible preparar la vista previa del PDF");
+    } finally {
+      setProcesando(false);
+    }
+  }
+
+  function cerrarVistaPrevia() {
+    if (vistaPdf) {
+      URL.revokeObjectURL(vistaPdf);
+    }
+    setVistaPdf("");
+    setArchivoPdf(null);
+  }
+
+  async function descargarDesdeVista() {
+    setProcesando(true);
+    setError("");
+    try {
+      const respuesta = await api.post(`/cotizaciones/${id}/emitir`);
+      aplicar(respuesta.data.datos);
+      descargarPdf(archivoPdf, respuesta.data.datos.folio);
+      cerrarVistaPrevia();
+      setMensaje("PDF descargado correctamente");
+    } catch (problema) {
+      setError(problema.response?.data?.mensaje || "No fue posible descargar el PDF");
+    } finally {
+      setProcesando(false);
+    }
+  }
+
+  async function descargarDirectamente() {
     setError("");
     setMensaje("");
 
@@ -60,7 +118,7 @@ function CotizacionDetalle() {
       descargarPdf(archivo, respuesta.data.datos.folio);
       setMensaje("PDF descargado correctamente");
     } catch (problema) {
-      setError(problema.response?.data?.mensaje || "No fue posible generar el PDF");
+      setError(problema.response?.data?.mensaje || "No fue posible descargar el PDF");
     } finally {
       setProcesando(false);
     }
@@ -87,7 +145,7 @@ function CotizacionDetalle() {
     }
   }
 
-  async function guardarResultado(evento) {
+  async function guardarCambiosItems(evento) {
     evento.preventDefault();
     setError("");
     setMensaje("");
@@ -96,7 +154,7 @@ function CotizacionDetalle() {
     try {
       const items = cotizacion.items.map((item) => ({
         detalle_id: item.detalle_id,
-        cantidad_aceptada: cantidades[item.detalle_id],
+        cantidad_aceptada: Number(cantidades[item.detalle_id]),
       }));
       const respuesta = await api.put(`/cotizaciones/${id}/resultado`, {
         items,
@@ -104,12 +162,30 @@ function CotizacionDetalle() {
       });
       aplicar(respuesta.data.datos);
       setObservacionResultado("");
-      setMensaje("Resultado registrado correctamente");
+      setMensaje("Cambios de los ítems guardados correctamente");
     } catch (problema) {
-      setError(problema.response?.data?.mensaje || "No fue posible registrar el resultado");
+      setError(problema.response?.data?.mensaje || "No fue posible guardar los cambios de los ítems");
     } finally {
       setProcesando(false);
     }
+  }
+
+  function cambiarCantidad(item, valor) {
+    const cantidadMaxima = Math.max(1, parseInt(item.cantidad, 10) || 1);
+    const nuevaCantidad = Math.min(
+      cantidadMaxima,
+      Math.max(1, parseInt(valor, 10) || 1),
+    );
+    setCantidades({ ...cantidades, [item.detalle_id]: nuevaCantidad });
+  }
+
+  function marcarDescartado(item, descartado) {
+    setCantidades({
+      ...cantidades,
+      [item.detalle_id]: descartado
+        ? 0
+        : Math.max(1, parseInt(item.cantidad, 10) || 1),
+    });
   }
 
   if (!cotizacion) {
@@ -117,7 +193,7 @@ function CotizacionDetalle() {
   }
 
   const montoAceptado = cotizacion.items.reduce((total, item) => {
-    const cantidad = Number(item.cantidad_aceptada || 0);
+    const cantidad = Number(cantidades[item.detalle_id] || 0);
     return total + cantidad * Number(item.precio_unitario);
   }, 0);
 
@@ -132,11 +208,14 @@ function CotizacionDetalle() {
         <div className="acciones-formulario">
           {cotizacion.estado === "Borrador" && (
             <Link className="boton-enlace secundario" to={`/cotizaciones/${id}/editar`}>
-              Editar
+              Editar cotización
             </Link>
           )}
-          <button type="button" onClick={generarPdf} disabled={procesando}>
-            {procesando ? "Procesando..." : "Generar y descargar PDF"}
+          <button type="button" onClick={abrirVistaPrevia} disabled={procesando}>
+            {procesando ? "Procesando..." : "Vista previa PDF"}
+          </button>
+          <button type="button" onClick={descargarDirectamente} disabled={procesando}>
+            Descargar PDF
           </button>
         </div>
       </div>
@@ -156,44 +235,73 @@ function CotizacionDetalle() {
             </div>
           </section>
 
-          <div className="tabla-contenedor">
-            <table>
-              <thead>
-                <tr>
-                  <th>Ítem</th>
-                  <th>Cantidad</th>
-                  <th>Precio</th>
-                  <th>Subtotal</th>
-                  <th>Cantidad aceptada</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cotizacion.items.map((item) => (
-                  <tr key={item.detalle_id}>
-                    <td>{item.descripcion_aplicada}</td>
-                    <td>{Number(item.cantidad)}</td>
-                    <td>{cotizacion.moneda} {Number(item.precio_unitario).toLocaleString("es-CL")}</td>
-                    <td>{cotizacion.moneda} {Number(item.subtotal).toLocaleString("es-CL")}</td>
-                    <td>
-                      <input
-                        aria-label={`Cantidad aceptada de ${item.descripcion_aplicada}`}
-                        type="number"
-                        min="0"
-                        max={item.cantidad}
-                        step="0.001"
-                        value={cantidades[item.detalle_id]}
-                        onChange={(evento) => setCantidades({
-                          ...cantidades,
-                          [item.detalle_id]: evento.target.value,
-                        })}
-                        disabled={cotizacion.estado === "Borrador"}
-                      />
-                    </td>
+          <form onSubmit={guardarCambiosItems}>
+            <div className="tabla-contenedor">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ítem</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                    <th>Cantidad aceptada</th>
+                    <th>Descartado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {cotizacion.items.map((item) => {
+                    const descartado = Number(cantidades[item.detalle_id]) === 0;
+                    return (
+                      <tr key={item.detalle_id}>
+                        <td data-label="Ítem">{item.descripcion_aplicada}</td>
+                        <td data-label="Cantidad">{Number(item.cantidad)}</td>
+                        <td data-label="Precio">{cotizacion.moneda} {Number(item.precio_unitario).toLocaleString("es-CL")}</td>
+                        <td data-label="Subtotal">{cotizacion.moneda} {Number(item.subtotal).toLocaleString("es-CL")}</td>
+                        <td data-label="Cantidad aceptada">
+                          <input
+                            className="cantidad-aceptada"
+                            aria-label={`Cantidad aceptada de ${item.descripcion_aplicada}`}
+                            type="number"
+                            min="1"
+                            max={Number(item.cantidad)}
+                            step="1"
+                            value={descartado ? "" : cantidades[item.detalle_id]}
+                            onChange={(evento) => cambiarCantidad(item, evento.target.value)}
+                            disabled={cotizacion.estado === "Borrador" || descartado}
+                          />
+                        </td>
+                        <td data-label="Descartado">
+                          <label className="control-descartado">
+                            <input
+                              type="checkbox"
+                              checked={descartado}
+                              onChange={(evento) => marcarDescartado(item, evento.target.checked)}
+                              disabled={cotizacion.estado === "Borrador"}
+                            />
+                            Descartar
+                          </label>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {cotizacion.estado !== "Borrador" && (
+              <div className="tarjeta cambios-items">
+                <label>
+                  Observación de los cambios
+                  <textarea
+                    value={observacionResultado}
+                    onChange={(evento) => setObservacionResultado(evento.target.value)}
+                    placeholder="Ejemplo: el cliente descartó un producto"
+                  />
+                </label>
+                <button type="submit" disabled={procesando}>Guardar cambios</button>
+              </div>
+            )}
+          </form>
 
           <section className="tarjeta totales-detalle">
             <p><span>Valor neto</span><strong>{cotizacion.moneda} {Number(cotizacion.valor_neto).toLocaleString("es-CL")}</strong></p>
@@ -201,19 +309,6 @@ function CotizacionDetalle() {
             <p><span>Total</span><strong>{cotizacion.moneda} {Number(cotizacion.total).toLocaleString("es-CL")}</strong></p>
             <p className="monto-aceptado"><span>Monto neto aceptado</span><strong>{cotizacion.moneda} {montoAceptado.toLocaleString("es-CL")}</strong></p>
           </section>
-
-          {cotizacion.estado !== "Borrador" && (
-            <form className="tarjeta seguimiento" onSubmit={guardarResultado}>
-              <h2>Registrar resultado</h2>
-              <p>Use cero para descartar un ítem, la cantidad completa para aceptarlo o un valor intermedio para registrar una aceptación parcial.</p>
-              <textarea
-                value={observacionResultado}
-                onChange={(evento) => setObservacionResultado(evento.target.value)}
-                placeholder="Observación del resultado"
-              />
-              <button type="submit" disabled={procesando}>Guardar resultado de los ítems</button>
-            </form>
-          )}
         </div>
 
         <aside className="detalle-lateral">
@@ -254,6 +349,23 @@ function CotizacionDetalle() {
           </section>
         </aside>
       </div>
+
+      {vistaPdf && (
+        <div className="modal-pdf" role="dialog" aria-modal="true" aria-label="Vista previa de la cotización">
+          <div className="modal-pdf-contenido">
+            <div className="modal-pdf-cabecera">
+              <h2>Vista previa PDF</h2>
+              <button type="button" className="secundario" onClick={cerrarVistaPrevia}>Cerrar</button>
+            </div>
+            <iframe src={vistaPdf} title="Vista previa de la cotización en PDF" />
+            <div className="modal-pdf-acciones">
+              <button type="button" onClick={descargarDesdeVista} disabled={procesando}>
+                Generar y descargar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

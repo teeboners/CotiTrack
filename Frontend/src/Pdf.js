@@ -1,10 +1,12 @@
 import React from "react";
-import { Document, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer";
+import { Document, Image, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer";
 
 
 const estilos = StyleSheet.create({
   pagina: { padding: 36, fontSize: 9, fontFamily: "Helvetica", color: "#10263d" },
   encabezado: { flexDirection: "row", justifyContent: "space-between", paddingBottom: 14, borderBottomWidth: 2, borderBottomColor: "#245b88" },
+  empresa: { flexDirection: "row", alignItems: "flex-start", maxWidth: "62%" },
+  logo: { width: 54, height: 54, objectFit: "contain", marginRight: 10 },
   titulo: { fontSize: 18, color: "#245b88", marginBottom: 6 },
   derecha: { textAlign: "right" },
   bloque: { marginTop: 16 },
@@ -26,16 +28,22 @@ function dinero(valor, moneda) {
 
 function CotizacionPDF({ cotizacion }) {
   const empresa = cotizacion.empresa;
+  const logo = empresa.logo_url && empresa.logo_url.startsWith("/")
+    ? `${window.location.origin}${empresa.logo_url}`
+    : empresa.logo_url;
 
   return (
     <Document title={`Cotización ${cotizacion.folio}`}>
       <Page size="A4" style={estilos.pagina}>
         <View style={estilos.encabezado}>
-          <View>
-            <Text style={estilos.titulo}>{empresa.razon_social}</Text>
-            <Text>RUT: {empresa.rut}</Text>
-            <Text>{empresa.direccion}</Text>
-            <Text>{empresa.correo} · {empresa.telefono}</Text>
+          <View style={estilos.empresa}>
+            {logo && <Image style={estilos.logo} src={logo} />}
+            <View>
+              <Text style={estilos.titulo}>{empresa.razon_social}</Text>
+              <Text>RUT: {empresa.rut}</Text>
+              <Text>{empresa.direccion}</Text>
+              <Text>{empresa.correo} · {empresa.telefono}</Text>
+            </View>
           </View>
           <View style={estilos.derecha}>
             <Text>COTIZACIÓN</Text>

@@ -1,8 +1,10 @@
 Backend/.venv/
+Backend/.venv312/
 Backend/__pycache__/
 Backend/**/*.pyc
 Backend/.pytest_cache/
 Backend/.env
+Backend/uploads/
 Frontend/node_modules/
 Frontend/build/
 Frontend/.env

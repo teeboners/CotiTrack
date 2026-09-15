@@ -253,13 +253,6 @@ a {
   color: var(--blanco);
 }
 
-.cerrar-sesion-lateral {
-  margin: auto 14px 18px;
-  border-color: rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #e9f1f6;
-}
-
 .area-principal {
   width: calc(100% - 230px);
   min-width: 0;
@@ -750,6 +743,209 @@ tbody tr:hover {
   line-height: 1.4;
 }
 
+/* Cuenta del usuario */
+
+.cuenta-superior {
+  position: relative;
+}
+
+.usuario-actual {
+  min-height: 0;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--texto);
+  text-align: left;
+}
+
+.usuario-actual:hover {
+  background: var(--azul-claro);
+}
+
+.usuario-texto strong,
+.usuario-texto small {
+  display: block;
+}
+
+.menu-cuenta {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  min-width: 150px;
+  padding: 6px;
+  border: 1px solid var(--borde);
+  border-radius: 7px;
+  background: var(--blanco);
+  box-shadow: var(--sombra);
+}
+
+.menu-cuenta a,
+.menu-cuenta button {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--texto);
+  text-align: left;
+  text-decoration: none;
+}
+
+.menu-cuenta a:hover,
+.menu-cuenta button:hover {
+  background: var(--azul-claro);
+}
+
+.cuenta-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.cuenta-columnas > div {
+  display: grid;
+  gap: 18px;
+}
+
+.formulario-cuenta {
+  grid-template-columns: 1fr;
+}
+
+.formulario-cuenta > * {
+  grid-column: 1 / -1;
+}
+
+.vista-logo {
+  width: 150px;
+  height: 75px;
+  object-fit: contain;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+/* Panel de indicadores */
+
+.indicadores-estados {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.indicadores-estados .indicador {
+  min-height: 115px;
+  border-top-width: 4px;
+}
+
+.indicador[data-estado="Borrador"] { border-top-color: #7b8794; }
+.indicador[data-estado="Enviada"] { border-top-color: #2970a6; }
+.indicador[data-estado="Aceptada"] { border-top-color: #2f8b57; }
+.indicador[data-estado="Rechazada"] { border-top-color: #b54a4a; }
+.indicador[data-estado="Parcialmente aceptada"] { border-top-color: #7652a6; }
+.indicador[data-estado="Vencida"] { border-top-color: #bd7b24; }
+
+.encabezado-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.encabezado-panel h2,
+.encabezado-panel p {
+  margin-bottom: 3px;
+}
+
+.encabezado-panel p {
+  color: var(--texto-suave);
+}
+
+.enlace-simple {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Edición del resultado y vista previa */
+
+.cantidad-aceptada {
+  min-width: 90px;
+}
+
+.control-descartado {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 400;
+}
+
+.control-descartado input {
+  width: auto;
+}
+
+.cambios-items {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 12px;
+}
+
+.cambios-items label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.cambios-items textarea {
+  min-height: 70px;
+}
+
+.modal-pdf {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(7, 22, 34, 0.7);
+}
+
+.modal-pdf-contenido {
+  width: min(96vw, 1200px);
+  height: 94vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--blanco);
+}
+
+.modal-pdf-cabecera,
+.modal-pdf-acciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-pdf-cabecera h2 {
+  margin: 0;
+}
+
+.modal-pdf-acciones {
+  justify-content: flex-end;
+}
+
+.modal-pdf iframe {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--borde);
+}
+
 /* Adaptación responsive */
 
 @media (max-width: 1100px) {
@@ -773,6 +969,10 @@ tbody tr:hover {
   .item-cotizacion,
   .encabezado-items {
     grid-template-columns: 1.1fr 1.2fr 80px 110px 115px 34px;
+  }
+
+  .cuenta-columnas {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -843,6 +1043,10 @@ tbody tr:hover {
   .datos-cotizacion {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .indicadores-estados {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 620px) {
@@ -854,7 +1058,7 @@ tbody tr:hover {
     min-height: 58px;
   }
 
-  .usuario-actual div {
+  .usuario-texto {
     display: none;
   }
 
@@ -887,6 +1091,17 @@ tbody tr:hover {
 
   .resumen-principal div:last-child {
     text-align: left;
+  }
+
+  .indicadores-estados {
+    grid-template-columns: 1fr;
+  }
+
+  .encabezado-panel,
+  .cambios-items {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .acciones-formulario > *,

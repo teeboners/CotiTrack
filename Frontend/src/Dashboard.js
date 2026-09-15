@@ -4,6 +4,21 @@ import { Link } from "react-router-dom";
 import api from "./api";
 
 
+const ESTADOS = [
+  { nombre: "Borrador", etiqueta: "Borradores" },
+  { nombre: "Enviada", etiqueta: "Enviadas" },
+  { nombre: "Aceptada", etiqueta: "Aceptadas" },
+  { nombre: "Rechazada", etiqueta: "Rechazadas" },
+  { nombre: "Parcialmente aceptada", etiqueta: "Parcialmente aceptadas" },
+  { nombre: "Vencida", etiqueta: "Vencidas" },
+];
+
+
+function dinero(valor, moneda) {
+  return `${moneda} ${Number(valor).toLocaleString("es-CL")}`;
+}
+
+
 function Dashboard() {
   const [resumen, setResumen] = useState(null);
   const [error, setError] = useState("");
@@ -24,18 +39,20 @@ function Dashboard() {
     return <p>Cargando indicadores...</p>;
   }
 
-  const montosPorMoneda = {};
-  resumen.por_estado.forEach((item) => {
-    montosPorMoneda[item.moneda] =
-      (montosPorMoneda[item.moneda] || 0) + Number(item.monto);
-  });
+  function obtenerEstado(nombre) {
+    const registros = resumen.por_estado.filter((item) => item.estado === nombre);
+    return {
+      cantidad: registros.reduce((total, item) => total + Number(item.cantidad), 0),
+      montos: registros,
+    };
+  }
 
   return (
     <section>
       <div className="titulo-pagina">
         <div>
           <h1>Dashboard</h1>
-          <p>Resumen del seguimiento de cotizaciones.</p>
+          <p>Resumen de tus cotizaciones y actividad reciente.</p>
         </div>
         <Link className="boton-enlace" to="/cotizaciones/nueva">
           Nueva cotización
@@ -44,75 +61,84 @@ function Dashboard() {
 
       <section className="resumen-principal">
         <div>
-          <span>Monto total cotizado</span>
-          {Object.entries(montosPorMoneda).length === 0 ? (
-            <strong>Sin cotizaciones</strong>
+          <span>Monto total cotizado este mes</span>
+          {resumen.monto_mes.length === 0 ? (
+            <strong>CLP 0</strong>
           ) : (
-            Object.entries(montosPorMoneda).map(([moneda, monto]) => (
-              <strong key={moneda}>{moneda} {monto.toLocaleString("es-CL")}</strong>
+            resumen.monto_mes.map((item) => (
+              <strong key={item.moneda}>{dinero(item.monto, item.moneda)}</strong>
             ))
           )}
         </div>
         <div>
-          <span>Total de cotizaciones</span>
-          <strong>{resumen.total_cotizaciones}</strong>
+          <span>Cotizaciones creadas este mes</span>
+          <strong>{resumen.total_cotizaciones_mes}</strong>
         </div>
       </section>
 
-      <div className="indicadores">
-        {resumen.por_estado.map((item) => (
-          <article className="tarjeta indicador" key={`${item.estado}-${item.moneda}`}>
-            <span className="etiqueta-estado" data-estado={item.estado}>
-              {item.estado}
-            </span>
-            <strong>{item.cantidad}</strong>
-            <small>{item.moneda} {Number(item.monto).toLocaleString("es-CL")}</small>
-          </article>
-        ))}
-
-        <article className="tarjeta indicador indicador-descartados">
-          <span>Ítems descartados</span>
-          <strong>{resumen.items_descartados}</strong>
-          <small>Resultado registrado con cantidad cero</small>
-        </article>
-
-        {resumen.aceptado_por_moneda.map((item) => (
-          <article className="tarjeta indicador indicador-aceptado" key={item.moneda}>
-            <span>Neto aceptado en {item.moneda}</span>
-            <strong>{item.moneda} {Number(item.neto_aceptado).toLocaleString("es-CL")}</strong>
-            <small>Monto aceptado por los clientes</small>
-          </article>
-        ))}
+      <div className="indicadores indicadores-estados">
+        {ESTADOS.map((estado) => {
+          const datos = obtenerEstado(estado.nombre);
+          return (
+            <article className="tarjeta indicador" data-estado={estado.nombre} key={estado.nombre}>
+              <span>{estado.etiqueta}</span>
+              <strong>{datos.cantidad}</strong>
+              {datos.montos.length === 0 ? (
+                <small>CLP 0</small>
+              ) : (
+                datos.montos.map((item) => (
+                  <small key={item.moneda}>{dinero(item.monto, item.moneda)}</small>
+                ))
+              )}
+            </article>
+          );
+        })}
       </div>
 
-      <section className="tarjeta panel-estados">
-        <h2>Cotizaciones por estado y moneda</h2>
-        {resumen.por_estado.length === 0 ? (
-          <p>Todavía no existen cotizaciones.</p>
-        ) : (
-          <div className="tabla-contenedor">
-            <table>
-              <thead>
-                <tr>
-                  <th>Estado</th>
-                  <th>Moneda</th>
-                  <th>Cantidad</th>
-                  <th>Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resumen.por_estado.map((item) => (
-                  <tr key={`${item.estado}-${item.moneda}`}>
-                    <td>{item.estado}</td>
-                    <td>{item.moneda}</td>
-                    <td>{item.cantidad}</td>
-                    <td>{item.moneda} {Number(item.monto).toLocaleString("es-CL")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <section className="tarjeta panel-recientes">
+        <div className="encabezado-panel">
+          <div>
+            <h2>Cotizaciones recientes</h2>
+            <p>Últimas cinco cotizaciones actualizadas.</p>
           </div>
-        )}
+          <Link className="enlace-simple" to="/cotizaciones">Ver todas</Link>
+        </div>
+
+        <div className="tabla-contenedor">
+          <table>
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {resumen.recientes.map((cotizacion) => (
+                <tr key={cotizacion.cotizacion_id}>
+                  <td data-label="Folio"><strong>{cotizacion.folio}</strong></td>
+                  <td data-label="Cliente">{cotizacion.cliente}</td>
+                  <td data-label="Fecha">{cotizacion.fecha_emision}</td>
+                  <td data-label="Total">{dinero(cotizacion.total, cotizacion.moneda)}</td>
+                  <td data-label="Estado">
+                    <span className="etiqueta-estado" data-estado={cotizacion.estado}>{cotizacion.estado}</span>
+                  </td>
+                  <td data-label="Acción">
+                    <Link className="enlace-simple" to={`/cotizaciones/${cotizacion.cotizacion_id}`}>Ver</Link>
+                  </td>
+                </tr>
+              ))}
+              {resumen.recientes.length === 0 && (
+                <tr>
+                  <td colSpan="6">Todavía no existen cotizaciones.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </section>
   );

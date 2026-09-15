@@ -1,10 +1,11 @@
 from decimal import Decimal
+from datetime import date, datetime
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, g, jsonify
 from mysql.connector import Error
 
 from auth import login_required
-from database import get_connection, close_connection
+from database import close_connection, get_connection
 
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
@@ -17,6 +18,8 @@ def convertir(valor):
         return [convertir(elemento) for elemento in valor]
     if isinstance(valor, dict):
         return {clave: convertir(contenido) for clave, contenido in valor.items()}
+    if isinstance(valor, (date, datetime)):
+        return valor.isoformat()
     return valor
 
 
@@ -25,61 +28,69 @@ def convertir(valor):
 def resumen():
     connection = None
     cursor = None
+    usuario_id = g.usuario["usuario_id"]
 
     try:
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
 
-        cursor.execute("SELECT COUNT(*) AS total FROM cotizaciones")
-        total_cotizaciones = cursor.fetchone()["total"]
+        cursor.execute(
+            """
+            SELECT q.moneda, COUNT(*) AS cantidad,
+                   COALESCE(SUM(q.total), 0) AS monto
+            FROM cotizaciones q
+            WHERE q.usuario_id = %s
+              AND YEAR(q.fecha_emision) = YEAR(CURDATE())
+              AND MONTH(q.fecha_emision) = MONTH(CURDATE())
+            GROUP BY q.moneda
+            ORDER BY q.moneda
+            """,
+            (usuario_id,),
+        )
+        monto_mes = cursor.fetchall()
 
         cursor.execute(
             """
-            SELECT
-                e.nombre AS estado,
-                q.moneda,
-                COUNT(*) AS cantidad,
-                COALESCE(SUM(q.total), 0) AS monto
+            SELECT e.nombre AS estado, q.moneda, COUNT(*) AS cantidad,
+                   COALESCE(SUM(q.total), 0) AS monto
             FROM cotizaciones q
             INNER JOIN estados_cotizacion e ON e.estado_id = q.estado_id
+            WHERE q.usuario_id = %s
             GROUP BY e.estado_id, e.nombre, q.moneda
             ORDER BY e.estado_id, q.moneda
-            """
+            """,
+            (usuario_id,),
         )
         por_estado = cursor.fetchall()
 
         cursor.execute(
             """
-            SELECT COUNT(*) AS total
-            FROM detalle_cotizacion
-            WHERE cantidad_aceptada = 0
-            """
+            SELECT q.cotizacion_id, q.folio,
+                   c.nombre_razon_social AS cliente,
+                   q.fecha_emision, q.moneda, q.total,
+                   e.nombre AS estado
+            FROM cotizaciones q
+            INNER JOIN clientes c ON c.cliente_id = q.cliente_id
+            INNER JOIN estados_cotizacion e ON e.estado_id = q.estado_id
+            WHERE q.usuario_id = %s
+            ORDER BY q.fecha_actualizacion DESC, q.cotizacion_id DESC
+            LIMIT 5
+            """,
+            (usuario_id,),
         )
-        items_descartados = cursor.fetchone()["total"]
+        recientes = cursor.fetchall()
 
-        cursor.execute(
-            """
-            SELECT
-                q.moneda,
-                COALESCE(SUM(d.cantidad_aceptada * d.precio_unitario), 0) AS neto_aceptado
-            FROM detalle_cotizacion d
-            INNER JOIN cotizaciones q ON q.cotizacion_id = d.cotizacion_id
-            WHERE d.cantidad_aceptada IS NOT NULL
-            GROUP BY q.moneda
-            ORDER BY q.moneda
-            """
-        )
-        aceptado_por_moneda = cursor.fetchall()
+        total_cotizaciones_mes = sum(fila["cantidad"] for fila in monto_mes)
 
         return jsonify(
             {
                 "ok": True,
                 "datos": convertir(
                     {
-                        "total_cotizaciones": total_cotizaciones,
+                        "total_cotizaciones_mes": total_cotizaciones_mes,
+                        "monto_mes": monto_mes,
                         "por_estado": por_estado,
-                        "items_descartados": items_descartados,
-                        "aceptado_por_moneda": aceptado_por_moneda,
+                        "recientes": recientes,
                     }
                 ),
             }

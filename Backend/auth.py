@@ -1,10 +1,10 @@
 from functools import wraps
 
 from flask import Blueprint, g, jsonify, request, session
-from mysql.connector import Error
+from mysql.connector import Error, IntegrityError
 
 from database import get_connection, close_connection
-from domain import password_matches, required_text
+from domain import password_hash, password_matches, required_text
 
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -177,3 +177,75 @@ def logout():
         "ok": True,
         "mensaje": "Sesión cerrada"
     })
+
+
+@auth_bp.get("/cuenta")
+@login_required
+def obtener_cuenta():
+    return jsonify({"ok": True, "datos": g.usuario})
+
+
+@auth_bp.put("/cuenta")
+@login_required
+def actualizar_cuenta():
+    datos = request.get_json(silent=True) or {}
+
+    try:
+        nombre = required_text(datos.get("nombre"), "El nombre")
+        correo = required_text(datos.get("correo"), "El correo").lower()
+    except ValueError as error:
+        return jsonify({"ok": False, "mensaje": str(error)}), 400
+
+    connection = None
+    cursor = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE usuarios SET nombre = %s, correo = %s WHERE usuario_id = %s",
+            (nombre, correo, g.usuario["usuario_id"]),
+        )
+        connection.commit()
+        usuario = buscar_usuario_activo(g.usuario["usuario_id"])
+        return jsonify({"ok": True, "mensaje": "Cuenta actualizada correctamente", "usuario": usuario})
+    except IntegrityError:
+        if connection:
+            connection.rollback()
+        return jsonify({"ok": False, "mensaje": "El correo ya está registrado"}), 409
+    except Error:
+        if connection:
+            connection.rollback()
+        return jsonify({"ok": False, "mensaje": "No fue posible actualizar la cuenta"}), 500
+    finally:
+        close_connection(connection, cursor)
+
+
+@auth_bp.put("/cuenta/password")
+@login_required
+def cambiar_password():
+    datos = request.get_json(silent=True) or {}
+
+    try:
+        password = required_text(datos.get("password"), "La nueva contraseña")
+        if len(password) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")
+    except ValueError as error:
+        return jsonify({"ok": False, "mensaje": str(error)}), 400
+
+    connection = None
+    cursor = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE usuarios SET password_hash = %s WHERE usuario_id = %s",
+            (password_hash(password), g.usuario["usuario_id"]),
+        )
+        connection.commit()
+        return jsonify({"ok": True, "mensaje": "Contraseña actualizada correctamente"})
+    except Error:
+        if connection:
+            connection.rollback()
+        return jsonify({"ok": False, "mensaje": "No fue posible cambiar la contraseña"}), 500
+    finally:
+        close_connection(connection, cursor)

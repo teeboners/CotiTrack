@@ -238,6 +238,10 @@ def consultar_detalle(cursor, cotizacion_id):
         """
     )
     cotizacion["empresa"] = cursor.fetchone()
+    if cotizacion["empresa"] and cotizacion["empresa"].get("logo_url"):
+        logo_url = cotizacion["empresa"]["logo_url"]
+        if not logo_url.startswith(("http://", "https://", "/")):
+            cotizacion["empresa"]["logo_url"] = "/api/empresa/logo"
     return cotizacion
 
 

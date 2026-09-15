@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   BrowserRouter,
+  Link,
   NavLink,
   Redirect,
   Route,
@@ -16,6 +17,7 @@ import CotizacionForm from "./CotizacionForm";
 import CotizacionDetalle from "./CotizacionDetalle";
 import Dashboard from "./Dashboard";
 import Login from "./Login";
+import MiCuenta from "./MiCuenta";
 import "./styles.css";
 
 
@@ -23,6 +25,7 @@ function App() {
   const [usuario, setUsuario] = useState(null);
   const [comprobando, setComprobando] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [cuentaAbierta, setCuentaAbierta] = useState(false);
 
   useEffect(() => {
     api.get("/auth/sesion")
@@ -37,7 +40,12 @@ function App() {
     } finally {
       setUsuario(null);
       setMenuAbierto(false);
+      setCuentaAbierta(false);
     }
+  }
+
+  function cerrarMenu() {
+    setMenuAbierto(false);
   }
 
   if (comprobando) {
@@ -46,10 +54,6 @@ function App() {
 
   if (!usuario) {
     return <Login onLogin={setUsuario} />;
-  }
-
-  function cerrarMenu() {
-    setMenuAbierto(false);
   }
 
   return (
@@ -66,27 +70,24 @@ function App() {
 
           <nav className="menu-principal" aria-label="Navegación principal">
             <NavLink exact to="/" activeClassName="activo" onClick={cerrarMenu}>
-              <span>▦</span> Dashboard
+              Dashboard
             </NavLink>
             <NavLink to="/clientes" activeClassName="activo" onClick={cerrarMenu}>
-              <span>●</span> Clientes
+              Clientes
             </NavLink>
             <NavLink to="/productos" activeClassName="activo" onClick={cerrarMenu}>
-              <span>◆</span> Productos y servicios
+              Productos y servicios
             </NavLink>
             <NavLink to="/cotizaciones" activeClassName="activo" onClick={cerrarMenu}>
-              <span>▤</span> Cotizaciones
+              Cotizaciones
             </NavLink>
             {usuario.rol === "Administrador" && (
               <NavLink to="/usuarios" activeClassName="activo" onClick={cerrarMenu}>
-                <span>●</span> Gestión de usuarios
+                Gestión de usuarios
               </NavLink>
             )}
           </nav>
 
-          <button className="cerrar-sesion-lateral" type="button" onClick={cerrarSesion}>
-            Cerrar sesión
-          </button>
         </aside>
 
         {menuAbierto && (
@@ -109,14 +110,32 @@ function App() {
               ☰
             </button>
 
-            <div className="usuario-actual">
-              <span className="usuario-avatar">
-                {usuario.nombre.trim().charAt(0).toUpperCase()}
-              </span>
-              <div>
-                <strong>{usuario.nombre}</strong>
-                <small>{usuario.rol}</small>
-              </div>
+            <div className="cuenta-superior">
+              <button
+                className="usuario-actual"
+                type="button"
+                aria-expanded={cuentaAbierta}
+                onClick={() => setCuentaAbierta(!cuentaAbierta)}
+              >
+                <span className="usuario-avatar">
+                  {usuario.nombre.trim().charAt(0).toUpperCase()}
+                </span>
+                <span className="usuario-texto">
+                  <strong>{usuario.nombre}</strong>
+                  <small>{usuario.rol}</small>
+                </span>
+              </button>
+
+              {cuentaAbierta && (
+                <div className="menu-cuenta">
+                  <Link to="/mi-cuenta" onClick={() => setCuentaAbierta(false)}>
+                    Mi cuenta
+                  </Link>
+                  <button type="button" onClick={cerrarSesion}>
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
           </header>
 
@@ -133,6 +152,9 @@ function App() {
               </Route>
               <Route path="/usuarios">
                 {usuario.rol === "Administrador" ? <Usuarios /> : <Redirect to="/" />}
+              </Route>
+              <Route path="/mi-cuenta">
+                <MiCuenta usuario={usuario} onUsuarioActualizado={setUsuario} />
               </Route>
               <Route exact path="/cotizaciones/nueva">
                 <CotizacionForm />

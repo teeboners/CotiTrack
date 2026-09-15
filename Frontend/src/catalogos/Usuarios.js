@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import api from "../api";
 import Campo from "./Campo";
@@ -135,15 +136,18 @@ function Usuarios() {
           <h1>Gestión de usuarios</h1>
           <p>Consulta, registra y actualiza las cuentas del sistema.</p>
         </div>
-        <button type="button" onClick={() => {
-          setFormulario({ ...USUARIO_VACIO });
-          setUsuarioEditando(null);
-          setMostrarFormulario(true);
-          setMensaje("");
-          setError("");
-        }}>
-          Nuevo usuario
-        </button>
+        <div className="acciones-formulario">
+          <Link className="boton-enlace secundario" to="/mi-cuenta">Datos de empresa</Link>
+          <button type="button" onClick={() => {
+            setFormulario({ ...USUARIO_VACIO });
+            setUsuarioEditando(null);
+            setMostrarFormulario(true);
+            setMensaje("");
+            setError("");
+          }}>
+            Nuevo usuario
+          </button>
+        </div>
       </div>
 
       <form className="busqueda" onSubmit={buscarUsuarios}>
